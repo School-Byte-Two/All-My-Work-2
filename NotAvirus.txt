@@ -1,0 +1,12 @@
+@echo off
+title System Error
+color 0C
+echo Kritisk feil oppdaget...
+timeout /t 2 >nul
+echo Forsøker å reparere...
+timeout /t 2 >nul
+echo Feil! Starter nødprosedyre...
+timeout /t 2 >nul
+start "" "https://www.youtube.com/watch?v=dQw4w9WgXcQ&autoplay=1"
+color 07
+exit

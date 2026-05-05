@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <title>Fang kvadratet</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #111; color: #eee; display: grid; place-items: center; height: 100vh; }
+    #game { position: relative; width: 600px; height: 400px; background: #222; border: 2px solid #444; border-radius: 12px; overflow: hidden; }
+    #target { position: absolute; width: 40px; height: 40px; background: #4ade80; border-radius: 6px; cursor: pointer; }
+    #hud { margin-top: 12px; display: flex; gap: 16px; align-items: center; }
+    button { background: #4f46e5; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    button:hover { filter: brightness(1.1); }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <div id="target" title="Klikk meg!"></div>
+  </div>
+  <div id="hud">
+    <div>Poeng: <span id="score">0</span></div>
+    <div>Tid: <span id="time">30</span>s</div>
+    <button id="start">Start</button>
+  </div>
+  <script>
+    const game = document.getElementById('game');
+    const target = document.getElementById('target');
+    const scoreEl = document.getElementById('score');
+    const timeEl = document.getElementById('time');
+    const startBtn = document.getElementById('start');
+
+    let score = 0, time = 30, playing = false, timer;
+
+    function randPos() {
+      const gw = game.clientWidth, gh = game.clientHeight;
+      const tw = target.clientWidth, th = target.clientHeight;
+      const x = Math.floor(Math.random() * (gw - tw));
+      const y = Math.floor(Math.random() * (gh - th));
+      target.style.left = x + 'px';
+      target.style.top  = y + 'px';
+    }
+
+    function start() {
+      score = 0; time = 30; playing = true;
+      scoreEl.textContent = score; timeEl.textContent = time;
+      randPos();
+      target.style.display = 'block';
+      clearInterval(timer);
+      timer = setInterval(() => {
+        time--; timeEl.textContent = time;
+        randPos();
+        if (time <= 0) end();
+      }, 800);
+    }
+
+    function end() {
+      playing = false;
+      clearInterval(timer);
+      target.style.display = 'none';
+      alert(`Tiden er ute! Poeng: ${score}`);
+    }
+
+    target.addEventListener('click', () => {
+      if (!playing) return;
+      score++; scoreEl.textContent = score;
+      randPos();
+      // Øk vanskelighet: litt mindre target hver gang
+      const size = Math.max(20, 40 - Math.floor(score / 3));
+      target.style.width = size + 'px';
+      target.style.height = size + 'px';
+      // Bonus: kort fargeblink
+      target.style.background = '#60a5fa';
+      setTimeout(() => target.style.background = '#4ade80', 100);
+    });
+
+    startBtn.addEventListener('click', start);
+    // Init
+    target.style.display = 'none';
+  </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "fake-hacking-app",
+  "version": "1.0.0",
+  "description": "A fake hacking simulation app with scrolling binary and fake messages",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^25.0.0"
+  }
+}

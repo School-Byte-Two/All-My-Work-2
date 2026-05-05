@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <title>Geometry Dash JumpPads</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #050816;
+      font-family: system-ui, sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      overflow: hidden;
+    }
+    h1 {
+      margin: 10px 0 0;
+      font-size: 20px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    #info {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-bottom: 6px;
+    }
+    #game {
+      position: relative;
+      width: 800px;
+      height: 260px;
+      background: linear-gradient(180deg, #020617 0%, #020617 55%, #0f172a 55%, #020617 100%);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 0 30px rgba(59,130,246,0.4);
+      border: 2px solid #1d4ed8;
+    }
+    #ground {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 60px;
+      background: repeating-linear-gradient(
+        -45deg,
+        #1e293b 0,
+        #1e293b 8px,
+        #0f172a 8px,
+        #0f172a 16px
+      );
+    }
+    #player {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      left: 80px;
+      bottom: 60px;
+      background: linear-gradient(135deg, #22c55e, #a855f7);
+      box-shadow: 0 0 12px rgba(168,85,247,0.9);
+      border-radius: 6px;
+      transform-origin: center;
+    }
+    .spike {
+      position: absolute;
+      width: 24px;
+      height: 32px; /* litt lavere = snillere */
+      background: linear-gradient(180deg, #fb923c, #ef4444);
+      box-shadow: 0 0 10px rgba(248,113,113,0.9);
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+    .platform {
+      position: absolute;
+      width: 80px;
+      height: 16px;
+      background: linear-gradient(180deg, #38bdf8, #0ea5e9);
+      box-shadow: 0 0 10px rgba(56,189,248,0.7);
+      border-radius: 4px;
+    }
+    .pad {
+      position: absolute;
+      width: 32px;
+      height: 12px;
+      background: linear-gradient(90deg, #facc15, #f97316);
+      box-shadow: 0 0 12px rgba(250,204,21,0.9);
+      border-radius: 999px;
+    }
+    #hud {
+      margin-top: 8px;
+      display: flex;
+      gap: 16px;
+      font-size: 14px;
+      align-items: center;
+    }
+    #score, #best {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid #1d4ed8;
+    }
+    #status {
+      min-width: 180px;
+      text-align: center;
+      font-size: 13px;
+      opacity: 0.9;
+    }
+    #btnRestart {
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: none;
+      background: #4f46e5;
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(79,70,229,0.7);
+    }
+    #btnRestart:hover {
+      filter: brightness(1.1);
+    }
+    .flash {
+      animation: flash 0.25s;
+    }
+    @keyframes flash {
+      0% { background-color: #450a0a; }
+      100% { background-color: #050816; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Geometry Dash JumpPads</h1>
+  <div id="info">MELLOMROM / klikk = hopp • Gule pads = superhopp</div>
+  <div id="game">
+    <div id="player"></div>
+    <div id="ground"></div>
+  </div>
+  <div id="hud">
+    <div id="score">Score: 0</div>
+    <div id="best">Best: 0</div>
+    <div id="status">Klar...</div>
+    <button id="btnRestart">Restart</button>
+  </div>
+
+  <script>
+    const game = document.getElementById('game');
+    const player = document.getElementById('player');
+    const scoreEl = document.getElementById('score');
+    const bestEl = document.getElementById('best');
+    const statusEl = document.getElementById('status');
+    const btnRestart = document.getElementById('btnRestart');
+
+    const gameWidth = 800;
+    const groundY = 60;
+    const gravity = 0.7;
+    const jumpForce = 13;
+    const padJumpForce = 20; // kraftigere hopp på pad
+
+    let entities = []; // {el, x, type}
+    let running = false;
+    let dead = false;
+    let y = groundY;
+    let vy = 0;
+    let rot = 0;
+    let score = 0;
+    let best = 0;
+    let spawnCooldown = 0;
+    let time = 0;
+
+    function resetGame() {
+      entities.forEach(o => o.el.remove());
+      entities = [];
+
+      y = groundY;
+      vy = 0;
+      rot = 0;
+      score = 0;
+      spawnCooldown = 0;
+      dead = false;
+      running = true;
+      time = 0;
+
+      player.style.bottom = y + 'px';
+      player.style.transform = 'rotate(0deg)';
+      game.classList.remove('flash');
+
+      scoreEl.textContent = 'Score: 0';
+      statusEl.textContent = 'Løper...';
+    }
+
+    function spawnSpike(x, bottomY) {
+      const s = document.createElement('div');
+      s.className = 'spike';
+      s.style.left = x + 'px';
+      s.style.bottom = bottomY + 'px';
+      game.appendChild(s);
+      entities.push({ el: s, x, type: 'spike' });
+    }
+
+    function spawnPlatform(x, bottomY) {
+      const p = document.createElement('div');
+      p.className = 'platform';
+      p.style.left = x + 'px';
+      p.style.bottom = bottomY + 'px';
+      game.appendChild(p);
+      entities.push({ el: p, x, type: 'platform' });
+    }
+
+    function spawnPad(x, bottomY) {
+      const pad = document.createElement('div');
+      pad.className = 'pad';
+      pad.style.left = x + 'px';
+      pad.style.bottom = bottomY + 'px';
+      game.appendChild(pad);
+      entities.push({ el: pad, x, type: 'pad' });
+    }
+
+    function spawnObstacleBatch() {
+      let offset = 0;
+
+      // maks 2 spikes ved siden av hverandre
+      const spikeCount = 1 + Math.floor(Math.random() * 2);
+      for (let i = 0; i < spikeCount; i++) {
+        const x = gameWidth + offset;
+        spawnSpike(x, groundY);
+        offset += 80 + Math.random() * 60;
+      }
+
+      // 40% sjanse for plattform
+      if (Math.random() < 0.4) {
+        const platformX = gameWidth + 40 + Math.random() * 80;
+        const platformHeight = groundY + 40 + Math.random() * 40;
+        spawnPlatform(platformX, platformHeight);
+      }
+
+      // 45% sjanse for jump pad (ofte i nærheten av spikes)
+      if (Math.random() < 0.45) {
+        const padX = gameWidth + 20 + Math.random() * 60;
+        const padY = groundY + 4;
+        spawnPad(padX, padY);
+      }
+    }
+
+    function jump() {
+      if (!running) resetGame();
+      if (dead) return;
+      if (onGroundOrPlatform()) vy = jumpForce;
+    }
+
+    function onGroundOrPlatform() {
+      if (y <= groundY + 1) return true;
+
+      const pRect = player.getBoundingClientRect();
+      for (const o of entities) {
+        if (o.type !== 'platform') continue;
+        const r = o.el.getBoundingClientRect();
+        const closeHoriz = pRect.right > r.left && pRect.left < r.right;
+        const feetAbove = Math.abs(pRect.bottom - r.top) < 6;
+        if (closeHoriz && feetAbove && vy <= 0) {
+          const platformBottom = parseFloat(o.el.style.bottom);
+          y = platformBottom + r.height;
+          vy = 0;
+          player.style.bottom = y + 'px';
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function handlePads() {
+      const pRect = player.getBoundingClientRect();
+      for (const o of entities) {
+        if (o.type !== 'pad') continue;
+        const r = o.el.getBoundingClientRect();
+        const closeHoriz = pRect.right > r.left && pRect.left < r.right;
+        const feetAbove = Math.abs(pRect.bottom - r.top) < 10;
+        if (closeHoriz && feetAbove && vy <= 0) {
+          vy = padJumpForce;
+          // liten visuell “squash”
+          o.el.style.transform = 'scaleY(0.6)';
+          setTimeout(() => o.el.style.transform = 'scaleY(1)', 80);
+        }
+      }
+    }
+
+    function update() {
+      requestAnimationFrame(update);
+      if (!running) return;
+
+      time += 1;
+      const speed = 4 + Math.min(8, time / 300 + score / 40);
+
+      vy -= gravity;
+      y += vy;
+      if (y < groundY) {
+        y = groundY;
+        vy = 0;
+      }
+      player.style.bottom = y + 'px';
+
+      if (vy <= 0) {
+        onGroundOrPlatform();
+        handlePads();
+      }
+
+      if (y > groundY + 1) {
+        rot += speed * 3;
+        player.style.transform = `rotate(${rot}deg)`;
+      } else {
+        rot = 0;
+        player.style.transform = 'rotate(0deg)';
+      }
+
+      spawnCooldown -= 1;
+      if (spawnCooldown <= 0) {
+        spawnObstacleBatch();
+        spawnCooldown = 60 + Math.random() * 40;
+      }
+
+      entities.forEach(o => {
+        o.x -= speed;
+        o.el.style.left = o.x + 'px';
+      });
+
+      entities = entities.filter(o => {
+        if (o.x < -140) {
+          o.el.remove();
+          if (o.type === 'spike') {
+            score++;
+            scoreEl.textContent = 'Score: ' + score;
+            if (score > best) {
+              best = score;
+              bestEl.textContent = 'Best: ' + best;
+            }
+          }
+          return false;
+        }
+        return true;
+      });
+
+      const p = player.getBoundingClientRect();
+      for (const o of entities) {
+        if (o.type !== 'spike') continue;
+        const r = o.el.getBoundingClientRect();
+        // litt snillere horisontalt: 3px margin
+        const left = r.left + 3;
+        const right = r.right - 3;
+        if (
+          p.left < right &&
+          p.right > left &&
+          p.bottom > r.top &&
+          p.top < r.bottom
+        ) {
+          die();
+          break;
+        }
+      }
+    }
+
+    function die() {
+      if (dead) return;
+      dead = true;
+      running = false;
+      statusEl.textContent = 'Død! Trykk restart eller hopp.';
+      game.classList.add('flash');
+      player.style.transform = 'scale(0.6) rotate(180deg)';
+    }
+
+    window.addEventListener('keydown', e => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        jump();
+      }
+    });
+    game.addEventListener('mousedown', jump);
+    btnRestart.addEventListener('click', resetGame);
+
+    requestAnimationFrame(update);
+  </script>
+</body>
+</html>

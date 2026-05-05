@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake Hacking</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: black;
+            color: green;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        #binary {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            white-space: pre;
+        }
+        #message {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-size: 2em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="binary"></div>
+    <div id="message"></div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const type = urlParams.get('type');
+
+        if (type === 'binary') {
+            const binaryDiv = document.getElementById('binary');
+            document.getElementById('message').style.display = 'none';
+
+            function generateBinary() {
+                let binary = '';
+                for (let i = 0; i < 80; i++) {
+                    binary += Math.random() > 0.5 ? '1' : '0';
+                }
+                return binary;
+            }
+
+            function scrollBinary() {
+                binaryDiv.innerHTML += generateBinary() + '\n';
+                if (binaryDiv.scrollHeight > window.innerHeight) {
+                    binaryDiv.innerHTML = binaryDiv.innerHTML.split('\n').slice(-50).join('\n');
+                }
+                binaryDiv.scrollTop = binaryDiv.scrollHeight;
+            }
+
+            setInterval(scrollBinary, 100);
+        } else if (type === 'message') {
+            document.getElementById('binary').style.display = 'none';
+            const messageDiv = document.getElementById('message');
+
+            const { ipcRenderer } = require('electron');
+            ipcRenderer.on('set-message', (event, message) => {
+                messageDiv.textContent = message;
+            });
+        }
+    </script>
+</body>
+</html>

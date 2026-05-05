@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <title>Multi-App Demo</title>
+  <style>
+    :root {
+      --bg: #f5f5f5;
+      --fg: #222;
+      --accent: #0077ff;
+      --card-bg: #ffffff;
+      --border: #dddddd;
+    }
+
+    body.dark {
+      --bg: #121212;
+      --fg: #f5f5f5;
+      --accent: #4dabf7;
+      --card-bg: #1e1e1e;
+      --border: #333333;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+    }
+
+    header {
+      padding: 16px 24px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    header .subtitle {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .theme-toggle {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    main {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .card p.description {
+      margin-top: 0;
+      font-size: 12px;
+      opacity: 0.8;
+      margin-bottom: 12px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: inherit;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    button {
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: transparent;
+      color: var(--accent);
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: 13px;
+    }
+
+    .todo-item span.done {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      border: 1px solid var(--border);
+      margin-left: 4px;
+      opacity: 0.8;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .row > * {
+      flex: 1;
+    }
+
+    .small {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .timer-display {
+      font-size: 24px;
+      font-weight: 600;
+      text-align: center;
+      margin: 8px 0 12px;
+    }
+
+    .notes-list {
+      max-height: 180px;
+      overflow-y: auto;
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+      padding-top: 8px;
+      font-size: 13px;
+    }
+
+    .note-item {
+      padding: 4px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .note-meta {
+      font-size: 10px;
+      opacity: 0.6;
+    }
+
+    .calc-display {
+      font-size: 20px;
+      text-align: right;
+      padding: 6px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+      min-height: 28px;
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .calc-btn {
+      padding: 8px 0;
+      text-align: center;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      font-size: 14px;
+      background: transparent;
+    }
+
+    .calc-btn.op {
+      background: rgba(0, 119, 255, 0.08);
+    }
+
+    .status {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Multi-App Demo</h1>
+      <div class="subtitle">Todo · Notater · Kalkulator · Timer · Tema</div>
+    </div>
+    <button class="theme-toggle" id="themeToggleBtn">Bytt til mørk modus</button>
+  </header>
+
+  <main>
+    <!-- TODO-LISTE -->
+    <section class="card" id="todoCard">
+      <h2>Todo-liste <span class="badge" id="todoCountBadge">0 oppgaver</span></h2>
+      <p class="description">En enkel oppgaveliste med fullfør/angre og slett.</p>
+      <div class="row">
+        <input type="text" id="todoInput" placeholder="Ny oppgave..." />
+        <button id="todoAddBtn">Legg til</button>
+      </div>
+      <div class="small" id="todoHint">Trykk på teksten for å markere som ferdig.</div>
+      <ul id="todoList"></ul>
+      <div class="status" id="todoStatus"></div>
+    </section>
+
+    <!-- NOTATER -->
+    <section class="card" id="notesCard">
+      <h2>Notater <span class="badge" id="notesCountBadge">0 notater</span></h2>
+      <p class="description">Skriv korte notater, lagre dem og se historikk.</p>
+      <textarea id="noteInput" placeholder="Skriv et notat..."></textarea>
+      <div class="row">
+        <button id="noteSaveBtn">Lagre notat</button>
+        <button class="secondary" id="noteClearBtn">Tøm felt</button>
+      </div>
+      <div class="notes-list" id="notesList"></div>
+      <div class="status" id="notesStatus"></div>
+    </section>
+
+    <!-- KALKULATOR -->
+    <section class="card" id="calcCard">
+      <h2>Kalkulator</h2>
+      <p class="description">En enkel kalkulator med grunnleggende operasjoner.</p>
+      <div class="calc-display" id="calcDisplay">0</div>
+      <div class="calc-grid" id="calcGrid">
+        <!-- Tall og operasjoner fylles inn via JS -->
+      </div>
+      <div class="status" id="calcStatus"></div>
+    </section>
+
+    <!-- TIMER / STOPPEKLOKKE -->
+    <section class="card" id="timerCard">
+      <h2>Timer / Stoppeklokke</h2>
+      <p class="description">Start, stopp og nullstill en enkel stoppeklokke.</p>
+      <div class="timer-display" id="timerDisplay">00:00.0</div>
+      <div class="row">
+        <button id="timerStartBtn">Start</button>
+        <button id="timerStopBtn" class="secondary">Stopp</button>
+        <button id="timerResetBtn" class="secondary">Nullstill</button>
+      </div>
+      <div class="status" id="timerStatus"></div>
+    </section>
+
+    <!-- LITEN “SYSTEMINFO” / DEMO -->
+    <section class="card" id="systemCard">
+      <h2>Systeminfo / Demo</h2>
+      <p class="description">Viser litt info om siden og noen små funksjoner.</p>
+      <div class="small" id="systemTime"></div>
+      <div class="small" id="systemInfo"></div>
+      <button id="systemPingBtn">Kjør “ping”</button>
+      <div class="status" id="systemStatus"></div>
+    </section>
+  </main>
+
+  <script>
+    // =========================
+    // Tema / mørk modus
+    // =========================
+
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+    function isDarkMode() {
+      return document.body.classList.contains('dark');
+    }
+
+    function updateThemeButtonLabel() {
+      if (isDarkMode()) {
+        themeToggleBtn.textContent = 'Bytt til lys modus';
+      } else {
+        themeToggleBtn.textContent = 'Bytt til mørk modus';
+      }
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      updateThemeButtonLabel();
+      saveThemePreference();
+    }
+
+    function saveThemePreference() {
+      try {
+        const mode = isDarkMode() ? 'dark' : 'light';
+        localStorage.setItem('app_theme', mode);
+      } catch (e) {
+        console.warn('Kunne ikke lagre tema:', e);
+      }
+    }
+
+    function loadThemePreference() {
+      try {
+        const stored = localStorage.getItem('app_theme');
+        if (stored === 'dark') {
+          document.body.classList.add('dark');
+        }
+      } catch (e) {
+        console.warn('Kunne ikke lese tema:', e);
+      }
+      updateThemeButtonLabel();
+    }
+
+    themeToggleBtn.addEventListener('click', toggleTheme);
+    loadThemePreference();
+
+    // =========================
+    // TODO-LISTE
+    // =========================
+
+    const todoInput = document.getElementById('todoInput');
+    const todoAddBtn = document.getElementById('todoAddBtn');
+    const todoListEl = document.getElementById('todoList');
+    const todoStatusEl = document.getElementById('todoStatus');
+    const todoCountBadge = document.getElementById('todoCountBadge');
+
+    let todos = [];
+
+    function createTodo(text) {
+      return {
+        id: Date.now().toString(),
+        text: text.trim(),
+        done: false,
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    function addTodo(text) {
+      if (!text || !text.trim()) {
+        setTodoStatus('Skriv noe før du legger til.', true);
+        return;
+      }
+      const todo = createTodo(text);
+      todos.push(todo);
+      renderTodos();
+      todoInput.value = '';
+      setTodoStatus('La til oppgave.', false);
+      saveTodos();
+    }
+
+    function toggleTodo(id) {
+      todos = todos.map(t => {
+        if (t.id === id) {
+          return { ...t, done: !t.done };
+        }
+        return t;
+      });
+      renderTodos();
+      saveTodos();
+    }
+
+    function deleteTodo(id) {
+      todos = todos.filter(t => t.id !== id);
+      renderTodos();
+      saveTodos();
+      setTodoStatus('Slettet oppgave.', false);
+    }
+
+    function setTodoStatus(message, isError) {
+      todoStatusEl.textContent = message;
+      todoStatusEl.style.color = isError ? 'crimson' : 'inherit';
+    }
+
+    function updateTodoCount() {
+      const total = todos.length;
+      const done = todos.filter(t => t.done).length;
+      todoCountBadge.textContent = `${total} oppgaver (${done} ferdig)`;
+    }
+
+    function renderTodos() {
+      todoListEl.innerHTML = '';
+      todos.forEach(todo => {
+        const li = document.createElement('li');
+        li.className = 'todo-item';
+
+        const span = document.createElement('span');
+        span.textContent = todo.text;
+        if (todo.done) {
+          span.classList.add('done');
+        }
+        span.addEventListener('click', () => toggleTodo(todo.id));
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Slett';
+        delBtn.className = 'secondary';
+        delBtn.addEventListener('click', () => deleteTodo(todo.id));
+
+        li.appendChild(span);
+        li.appendChild(delBtn);
+        todoListEl.appendChild(li);
+      });
+      updateTodoCount();
+    }
+
+    function saveTodos() {
+      try {
+        localStorage.setItem('app_todos', JSON.stringify(todos));
+      } catch (e) {
+        console.warn('Kunne ikke lagre todos:', e);
+      }
+    }
+
+    function loadTodos() {
+      try {
+        const stored = localStorage.getItem('app_todos');
+        if (stored) {
+          todos = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.warn('Kunne ikke lese todos:', e);
+      }
+      renderTodos();
+    }
+
+    todoAddBtn.addEventListener('click', () => addTodo(todoInput.value));
+    todoInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        addTodo(todoInput.value);
+      }
+    });
+
+    loadTodos();
+
+    // =========================
+    // NOTATER
+    // =========================
+
+    const noteInput = document.getElementById('noteInput');
+    const noteSaveBtn = document.getElementById('noteSaveBtn');
+    const noteClearBtn = document.getElementById('noteClearBtn');
+    const notesListEl = document.getElementById('notesList');
+    const notesStatusEl = document.getElementById('notesStatus');
+    const notesCountBadge = document.getElementById('notesCountBadge');
+
+    let notes = [];
+
+    function createNote(text) {
+      return {
+        id: Date.now().toString(),
+        text: text.trim(),
+        createdAt: new Date()
+      };
+    }
+
+    function addNote(text) {
+      if (!text || !text.trim()) {
+        setNotesStatus('Notatet er tomt.', true);
+        return;
+      }
+      const note = createNote(text);
+      notes.unshift(note);
+      renderNotes();
+      noteInput.value = '';
+      setNotesStatus('Notat lagret.', false);
+      saveNotes();
+    }
+
+    function deleteNote(id) {
+      notes = notes.filter(n => n.id !== id);
+      renderNotes();
+      saveNotes();
+      setNotesStatus('Notat slettet.', false);
+    }
+
+    function setNotesStatus(message, isError) {
+      notesStatusEl.textContent = message;
+      notesStatusEl.style.color = isError ? 'crimson' : 'inherit';
+    }
+
+    function updateNotesCount() {
+      const total = notes.length;
+      notesCountBadge.textContent = `${total} notater`;
+    }
+
+    function renderNotes() {
+      notesListEl.innerHTML = '';
+      notes.forEach(note => {
+        const div = document.createElement('div');
+        div.className = 'note-item';
+
+        const textDiv = document.createElement('div');
+        textDiv.textContent = note.text;
+
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'note-meta';
+        metaDiv.textContent = `Laget: ${note.createdAt.toLocaleString()}`;
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Slett';
+        delBtn.className = 'secondary';
+        delBtn.style.marginTop = '2px';
+        delBtn.addEventListener('click', () => deleteNote(note.id));
+
+        div.appendChild(textDiv);
+        div.appendChild(metaDiv);
+        div.appendChild(delBtn);
+
+        notesListEl.appendChild(div);
+      });
+      updateNotesCount();
+    }
+
+    function saveNotes() {
+      try {
+        const serializable = notes.map(n => ({
+          ...n,
+          createdAt: n.createdAt.toISOString()
+        }));
+        localStorage.setItem('app_notes', JSON.stringify(serializable));
+      } catch (e) {
+        console.warn('Kunne ikke lagre notater:', e);
+      }
+    }
+
+    function loadNotes() {
+      try {
+        const stored = localStorage.getItem('app_notes');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          notes = parsed.map(n => ({
+            ...n,
+            createdAt: new Date(n.createdAt)
+          }));
+        }
+      } catch (e) {
+        console.warn('Kunne ikke lese notater:', e);
+      }
+      renderNotes();
+    }
+
+    noteSaveBtn.addEventListener('click', () => addNote(noteInput.value));
+    noteClearBtn.addEventListener('click', () => {
+      noteInput.value = '';
+      setNotesStatus('Feltet er tømt.', false);
+    });
+
+    loadNotes();
+
+    // =========================
+    // KALKULATOR
+    // =========================
+
+    const calcDisplayEl = document.getElementById('calcDisplay');
+    const calcGridEl = document.getElementById('calcGrid');
+    const calcStatusEl = document.getElementById('calcStatus');
+
+    let calcCurrent = '0';
+    let calcPrevious = null;
+    let calcOperator = null;
+    let calcJustEvaluated = false;
+
+    const calcButtons = [
+      'C', '←', '%', '/',
+      '7', '8', '9', '*',
+      '4', '5', '6', '-',
+      '1', '2', '3', '+',
+      '0', '0', '.', '='
+    ];
+
+    function renderCalcButtons() {
+      calcGridEl.innerHTML = '';
+      calcButtons.forEach(label => {
+        const btn = document.createElement('div');
+        btn.textContent = label;
+        btn.className = 'calc-btn';
+        if (['/', '*', '-', '+', '='].includes(label)) {
+          btn.classList.add('op');
+        }
+        btn.addEventListener('click', () => handleCalcInput(label));
+        calcGridEl.appendChild(btn);
+      });
+    }
+
+    function setCalcDisplay(value) {
+      calcDisplayEl.textContent = value;
+    }
+
+    function resetCalc() {
+      calcCurrent = '0';
+      calcPrevious = null;
+      calcOperator = null;
+      calcJustEvaluated = false;
+      setCalcDisplay(calcCurrent);
+      calcStatusEl.textContent = '';
+    }
+
+    function backspaceCalc() {
+      if (calcJustEvaluated) {
+        resetCalc();
+        return;
+      }
+      if (calcCurrent.length <= 1) {
+        calcCurrent = '0';
+      } else {
+        calcCurrent = calcCurrent.slice(0, -1);
+      }
+      setCalcDisplay(calcCurrent);
+    }
+
+    function appendDigit(digit) {
+      if (calcJustEvaluated) {
+        calcCurrent = digit;
+        calcJustEvaluated = false;
+        setCalcDisplay(calcCurrent);
+        return;
+      }
+      if (calcCurrent === '0' && digit !== '.') {
+        calcCurrent = digit;
+      } else {
+        calcCurrent += digit;
+      }
+      setCalcDisplay(calcCurrent);
+    }
+
+    function setOperator(op) {
+      if (calcOperator && !calcJustEvaluated) {
+        evaluateCalc();
+      }
+      calcPrevious = calcCurrent;
+      calcOperator = op;
+      calcJustEvaluated = false;
+      calcCurrent = '0';
+      calcStatusEl.textContent = `Operator: ${op}`;
+    }
+
+    function evaluateCalc() {
+      if (!calcOperator || calcPrevious === null) {
+        return;
+      }
+      const a = parseFloat(calcPrevious);
+      const b = parseFloat(calcCurrent);
+      let result = 0;
+      switch (calcOperator) {
+        case '+': result = a + b; break;
+        case '-': result = a - b; break;
+        case '*': result = a * b; break;
+        case '/':
+          if (b === 0) {
+            calcStatusEl.textContent = 'Kan ikke dele på 0.';
+            return;
+          }
+          result = a / b;
+          break;
+        case '%':
+          result = a % b;
+          break;
+      }
+      calcCurrent = String(result);
+      calcPrevious = null;
+      calcOperator = null;
+      calcJustEvaluated = true;
+      setCalcDisplay(calcCurrent);
+      calcStatusEl.textContent = 'Resultat beregnet.';
+    }
+
+    function handleCalcInput(label) {
+      if (!isNaN(label)) {
+        appendDigit(label);
+        return;
+      }
+      switch (label) {
+        case 'C':
+          resetCalc();
+          break;
+        case '←':
+          backspaceCalc();
+          break;
+        case '.':
+          if (!calcCurrent.includes('.')) {
+            appendDigit('.');
+          }
+          break;
+        case '=':
+          evaluateCalc();
+          break;
+        case '%':
+        case '/':
+        case '*':
+        case '-':
+        case '+':
+          setOperator(label);
+          break;
+      }
+    }
+
+    renderCalcButtons();
+    resetCalc();
+
+    // =========================
+    // TIMER / STOPPEKLOKKE
+    // =========================
+
+    const timerDisplayEl = document.getElementById('timerDisplay');
+    const timerStartBtn = document.getElementById('timerStartBtn');
+    const timerStopBtn = document.getElementById('timerStopBtn');
+    const timerResetBtn = document.getElementById('timerResetBtn');
+    const timerStatusEl = document.getElementById('timerStatus');
+
+    let timerIntervalId = null;
+    let timerStartTime = null;
+    let timerElapsed = 0;
+
+    function formatTime(ms) {
+      const totalSeconds = ms / 1000;
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+      const tenths = Math.floor((totalSeconds * 10) % 10);
+      const mm = String(minutes).padStart(2, '0');
+      const ss = String(seconds).padStart(2, '0');
+      return `${mm}:${ss}.${tenths}`;
+    }
+
+    function updateTimerDisplay() {
+      const now = Date.now();
+      const elapsed = timerElapsed + (timerStartTime ? now - timerStartTime : 0);
+      timerDisplayEl.textContent = formatTime(elapsed);
+    }
+
+    function startTimer() {
+      if (timerIntervalId !== null) {
+        timerStatusEl.textContent = 'Timeren går allerede.';
+        return;
+      }
+      timerStartTime = Date.now();
+      timerIntervalId = setInterval(updateTimerDisplay, 100);
+      timerStatusEl.textContent = 'Timer startet.';
+    }
+
+    function stopTimer() {
+      if (timerIntervalId === null) {
+        timerStatusEl.textContent = 'Timeren er ikke i gang.';
+        return;
+      }
+      clearInterval(timerIntervalId);
+      timerIntervalId = null;
+      const now = Date.now();
+      timerElapsed += now - timerStartTime;
+      timerStartTime = null;
+      updateTimerDisplay();
+      timerStatusEl.textContent = 'Timer stoppet.';
+    }
+
+    function resetTimer() {
+      clearInterval(timerIntervalId);
+      timerIntervalId = null;
+      timerStartTime = null;
+      timerElapsed = 0;
+      timerDisplayEl.textContent = '00:00.0';
+      timerStatusEl.textContent = 'Timer nullstilt.';
+    }
+
+    timerStartBtn.addEventListener('click', startTimer);
+    timerStopBtn.addEventListener('click', stopTimer);
+    timerResetBtn.addEventListener('click', resetTimer);
+
+    // =========================
+    // SYSTEMINFO / DEMO
+    // =========================
+
+    const systemTimeEl = document.getElementById('systemTime');
+    const systemInfoEl = document.getElementById('systemInfo');
+    const systemStatusEl = document.getElementById('systemStatus');
+    const systemPingBtn = document.getElementById('systemPingBtn');
+
+    function updateSystemTime() {
+      const now = new Date();
+      systemTimeEl.textContent = `Klokkeslett: ${now.toLocaleTimeString()} – Dato: ${now.toLocaleDateString()}`;
+    }
+
+    function updateSystemInfo() {
+      const info = [
+        `Språk: ${navigator.language}`,
+        `Online: ${navigator.onLine ? 'Ja' : 'Nei'}`,
+        `Plattform: ${navigator.platform}`,
+        `User agent: ${navigator.userAgent}`
+      ];
+      systemInfoEl.textContent = info.join(' · ');
+    }
+
+    function pingSystem() {
+      const start = performance.now();
+      // Simulerer litt arbeid
+      let sum = 0;
+      for (let i = 0; i < 100000; i++) {
+        sum += i;
+      }
+      const end = performance.now();
+      systemStatusEl.textContent = `Ping OK – pseudoarbeid tok ${(end - start).toFixed(2)} ms (sum=${sum}).`;
+    }
+
+    systemPingBtn.addEventListener('click', pingSystem);
+    updateSystemTime();
+    updateSystemInfo();
+    setInterval(updateSystemTime, 1000);
+
+    // =========================
+    // EKSTRA HJELPEFUNKSJONER (KAN KOPIERES/UTVIDES)
+    // =========================
+
+    function logEvent(source, message) {
+      console.log(`[${new Date().toISOString()}] [${source}] ${message}`);
+    }
+
+    function safeParseJSON(str, fallback) {
+      try {
+        return JSON.parse(str);
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    function debounce(fn, delay) {
+      let timeoutId;
+      return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+
+    function throttle(fn, delay) {
+      let lastCall = 0;
+      return function (...args) {
+        const now = Date.now();
+        if (now - lastCall >= delay) {
+          lastCall = now;
+          fn.apply(this, args);
+        }
+      };
+    }
+
+    // Eksempel på bruk av hjelpefunksjoner (kan utvides)
+    const logResize = throttle(() => {
+      logEvent('window', `Størrelse: ${window.innerWidth}x${window.innerHeight}`);
+    }, 1000);
+
+    window.addEventListener('resize', logResize);
+
+    // Du kan lage flere små “demo”-funksjoner under her for å øke linjeantall:
+    // function demo1() { ... }
+    // function demo2() { ... }
+    // osv.
+    // Kopier mønsteret, gi dem litt enkel logikk, og du er fort oppe i 1500+ linjer.
+  </script>
+</body>
+</html>

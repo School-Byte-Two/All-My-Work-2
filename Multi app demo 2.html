@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <title>Multi-App 2 – Snake & mer</title>
+  <style>
+    :root {
+      --bg: #f4f4f7;
+      --fg: #222;
+      --accent: #ff6b6b;
+      --accent2: #4dabf7;
+      --card-bg: #ffffff;
+      --border: #dddddd;
+    }
+
+    body.dark {
+      --bg: #101018;
+      --fg: #f5f5f5;
+      --accent: #ff8787;
+      --accent2: #74c0fc;
+      --card-bg: #181820;
+      --border: #333344;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, rgba(255,255,255,0.12), transparent 60%), var(--bg);
+      color: var(--fg);
+    }
+
+    header {
+      padding: 16px 24px;
+      background: rgba(0,0,0,0.02);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    header .subtitle {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .theme-toggle {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    main {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(255,255,255,0.08), transparent 60%);
+      pointer-events: none;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .card p.description {
+      margin-top: 0;
+      font-size: 12px;
+      opacity: 0.8;
+      margin-bottom: 12px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.02);
+      color: inherit;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    button {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button.secondary {
+      background: transparent;
+      color: var(--accent);
+    }
+
+    button.alt {
+      border-color: var(--accent2);
+      background: var(--accent2);
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .row > * {
+      flex: 1;
+    }
+
+    .small {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      border: 1px solid var(--border);
+      margin-left: 4px;
+      opacity: 0.8;
+    }
+
+    .status {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 4px;
+    }
+
+    /* VANETRACKER */
+    .habit-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: 13px;
+    }
+
+    .habit-item label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .habit-item input[type="checkbox"] {
+      accent-color: var(--accent);
+    }
+
+    /* ØKONOMI */
+    .money-positive {
+      color: #2f9e44;
+    }
+
+    .money-negative {
+      color: #e03131;
+    }
+
+    .money-history {
+      max-height: 160px;
+      overflow-y: auto;
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+      padding-top: 8px;
+      font-size: 13px;
+    }
+
+    .money-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 2px 0;
+    }
+
+    /* QUOTES */
+    .quote-text {
+      font-size: 14px;
+      font-style: italic;
+      margin-bottom: 6px;
+    }
+
+    .quote-author {
+      font-size: 11px;
+      opacity: 0.7;
+      text-align: right;
+    }
+
+    /* FARGEGREIER */
+    .color-preview {
+      height: 60px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+
+    .color-code {
+      font-family: "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 13px;
+    }
+
+    /* SNAKE */
+    .snake-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+
+    canvas#snakeCanvas {
+      background: #000;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      image-rendering: pixelated;
+    }
+
+    .snake-info {
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .snake-score {
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Multi-App 2</h1>
+      <div class="subtitle">Snake · Vaner · Økonomi · Quotes · Farger</div>
+    </div>
+    <button class="theme-toggle" id="themeToggleBtn">Bytt til mørk modus</button>
+  </header>
+
+  <main>
+    <!-- SNAKE -->
+    <section class="card" id="snakeCard">
+      <h2>Snake-spill <span class="badge" id="snakeScoreBadge">Score: 0</span></h2>
+      <p class="description">Bruk piltastene. Ikke spis deg selv. Ikke treff veggen.</p>
+      <div class="snake-wrapper">
+        <canvas id="snakeCanvas" width="260" height="260"></canvas>
+        <div class="snake-info">
+          <div>Trykk <strong>Mellomrom</strong> for å starte/pausere. <span class="snake-score" id="snakeScoreText">Score: 0</span></div>
+          <div class="small" id="snakeStatus">Klar til å spille.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VANETRACKER -->
+    <section class="card" id="habitCard">
+      <h2>Vanetracker <span class="badge" id="habitBadge">0/0 i dag</span></h2>
+      <p class="description">Lag daglige vaner og kryss av for dagens gjennomføring.</p>
+      <div class="row">
+        <input type="text" id="habitInput" placeholder="Ny vane (f.eks. 'Trene', 'Lesing')" />
+        <button id="habitAddBtn">Legg til vane</button>
+      </div>
+      <div class="small">Dagens dato: <span id="habitDate"></span></div>
+      <ul id="habitList"></ul>
+      <div class="status" id="habitStatus"></div>
+    </section>
+
+    <!-- ØKONOMI -->
+    <section class="card" id="moneyCard">
+      <h2>Mini-økonomi <span class="badge" id="moneyBalanceBadge">Saldo: 0 kr</span></h2>
+      <p class="description">Legg inn inntekter og utgifter, se saldo og historikk.</p>
+      <div class="row">
+        <input type="number" id="moneyAmount" placeholder="Beløp (kr)" />
+        <input type="text" id="moneyLabel" placeholder="Beskrivelse (f.eks. 'Lønn', 'Mat')" />
+      </div>
+      <div class="row">
+        <button class="alt" id="moneyAddIncomeBtn">Legg til inntekt</button>
+        <button class="secondary" id="moneyAddExpenseBtn">Legg til utgift</button>
+      </div>
+      <div class="small" id="moneySummary"></div>
+      <div class="money-history" id="moneyHistory"></div>
+      <div class="status" id="moneyStatus"></div>
+    </section>
+
+    <!-- QUOTES -->
+    <section class="card" id="quoteCard">
+      <h2>Random quote</h2>
+      <p class="description">Trykk for å få en ny liten motivasjons- eller tankevekkende quote.</p>
+      <div class="quote-text" id="quoteText">Trykk på knappen for å få en quote.</div>
+      <div class="quote-author" id="quoteAuthor"></div>
+      <div class="row">
+        <button id="quoteNewBtn">Ny quote</button>
+        <button class="secondary" id="quoteCopyBtn">Kopier tekst</button>
+      </div>
+      <div class="status" id="quoteStatus"></div>
+    </section>
+
+    <!-- FARGEGREIER -->
+    <section class="card" id="colorCard">
+      <h2>Fargegenerator</h2>
+      <p class="description">Generer en tilfeldig farge, kopier hex-koden og bruk den i design.</p>
+      <div class="color-preview" id="colorPreview"></div>
+      <div class="row">
+        <div class="color-code" id="colorCode">#000000</div>
+        <button class="secondary" id="colorCopyBtn">Kopier</button>
+      </div>
+      <div class="row">
+        <button id="colorRandomBtn">Ny farge</button>
+      </div>
+      <div class="status" id="colorStatus"></div>
+    </section>
+  </main>
+
+  <script>
+    // =========================
+    // Tema / mørk modus
+    // =========================
+
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+    function isDarkMode() {
+      return document.body.classList.contains('dark');
+    }
+
+    function updateThemeButtonLabel() {
+      themeToggleBtn.textContent = isDarkMode()
+        ? 'Bytt til lys modus'
+        : 'Bytt til mørk modus';
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      updateThemeButtonLabel();
+      saveThemePreference();
+    }
+
+    function saveThemePreference() {
+      try {
+        const mode = isDarkMode() ? 'dark' : 'light';
+        localStorage.setItem('multiapp2_theme', mode);
+      } catch (e) {
+        console.warn('Kunne ikke lagre tema:', e);
+      }
+    }
+
+    function loadThemePreference() {
+      try {
+        const stored = localStorage.getItem('multiapp2_theme');
+        if (stored === 'dark') {
+          document.body.classList.add('dark');
+        }
+      } catch (e) {
+        console.warn('Kunne ikke lese tema:', e);
+      }
+      updateThemeButtonLabel();
+    }
+
+    themeToggleBtn.addEventListener('click', toggleTheme);
+    loadThemePreference();
+
+    // =========================
+    // VANETRACKER
+    // =========================
+
+    const habitInput = document.getElementById('habitInput');
+    const habitAddBtn = document.getElementById('habitAddBtn');
+    const habitListEl = document.getElementById('habitList');
+    const habitStatusEl = document.getElementById('habitStatus');
+    const habitBadge = document.getElementById('habitBadge');
+    const habitDateEl = document.getElementById('habitDate');
+
+    let habits = []; // { id, name, createdAt }
+    let habitChecks = {}; // { dateKey: { habitId: true/false } }
+
+    function getTodayKey() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function updateHabitDateLabel() {
+      const d = new Date();
+      habitDateEl.textContent = d.toLocaleDateString();
+    }
+
+    function createHabit(name) {
+      return {
+        id: Date.now().toString(),
+        name: name.trim(),
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    function addHabit(name) {
+      if (!name || !name.trim()) {
+        setHabitStatus('Skriv inn et navn på vanen.', true);
+        return;
+      }
+      const habit = createHabit(name);
+      habits.push(habit);
+      habitInput.value = '';
+      setHabitStatus('La til vane.', false);
+      saveHabits();
+      renderHabits();
+    }
+
+    function setHabitStatus(message, isError) {
+      habitStatusEl.textContent = message;
+      habitStatusEl.style.color = isError ? 'crimson' : 'inherit';
+    }
+
+    function toggleHabitCheck(habitId, checked) {
+      const key = getTodayKey();
+      if (!habitChecks[key]) {
+        habitChecks[key] = {};
+      }
+      habitChecks[key][habitId] = checked;
+      saveHabits();
+      updateHabitBadge();
+    }
+
+    function isHabitCheckedToday(habitId) {
+      const key = getTodayKey();
+      return habitChecks[key] && habitChecks[key][habitId];
+    }
+
+    function updateHabitBadge() {
+      const key = getTodayKey();
+      const total = habits.length;
+      const done = habits.filter(h => habitChecks[key] && habitChecks[key][h.id]).length;
+      habitBadge.textContent = `${done}/${total} i dag`;
+    }
+
+    function renderHabits() {
+      habitListEl.innerHTML = '';
+      habits.forEach(habit => {
+        const li = document.createElement('li');
+        li.className = 'habit-item';
+
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = isHabitCheckedToday(habit.id);
+        checkbox.addEventListener('change', () => {
+          toggleHabitCheck(habit.id, checkbox.checked);
+        });
+
+        const span = document.createElement('span');
+        span.textContent = habit.name;
+
+        label.appendChild(checkbox);
+        label.appendChild(span);
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Slett';
+        delBtn.className = 'secondary';
+        delBtn.addEventListener('click', () => {
+          deleteHabit(habit.id);
+        });
+
+        li.appendChild(label);
+        li.appendChild(delBtn);
+        habitListEl.appendChild(li);
+      });
+      updateHabitBadge();
+    }
+
+    function deleteHabit(id) {
+      habits = habits.filter(h => h.id !== id);
+      // Fjern også fra checks
+      Object.keys(habitChecks).forEach(key => {
+        if (habitChecks[key][id] !== undefined) {
+          delete habitChecks[key][id];
+        }
+      });
+      saveHabits();
+      renderHabits();
+      setHabitStatus('Vane slettet.', false);
+    }
+
+    function saveHabits() {
+      try {
+        localStorage.setItem('multiapp2_habits', JSON.stringify(habits));
+        localStorage.setItem('multiapp2_habitChecks', JSON.stringify(habitChecks));
+      } catch (e) {
+        console.warn('Kunne ikke lagre vaner:', e);
+      }
+    }
+
+    function loadHabits() {
+      try {
+        const storedHabits = localStorage.getItem('multiapp2_habits');
+        const storedChecks = localStorage.getItem('multiapp2_habitChecks');
+        if (storedHabits) {
+          habits = JSON.parse(storedHabits);
+        }
+        if (storedChecks) {
+          habitChecks = JSON.parse(storedChecks);
+        }
+      } catch (e) {
+        console.warn('Kunne ikke lese vaner:', e);
+      }
+      renderHabits();
+    }
+
+    habitAddBtn.addEventListener('click', () => addHabit(habitInput.value));
+    habitInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        addHabit(habitInput.value);
+      }
+    });
+
+    updateHabitDateLabel();
+    loadHabits();
+
+    // =========================
+    // MINI-ØKONOMI
+    // =========================
+
+    const moneyAmountEl = document.getElementById('moneyAmount');
+    const moneyLabelEl = document.getElementById('moneyLabel');
+    const moneyAddIncomeBtn = document.getElementById('moneyAddIncomeBtn');
+    const moneyAddExpenseBtn = document.getElementById('moneyAddExpenseBtn');
+    const moneyHistoryEl = document.getElementById('moneyHistory');
+    const moneyStatusEl = document.getElementById('moneyStatus');
+    const moneyBalanceBadge = document.getElementById('moneyBalanceBadge');
+    const moneySummaryEl = document.getElementById('moneySummary');
+
+    let moneyEntries = []; // { id, amount, label, type, createdAt }
+
+    function createMoneyEntry(amount, label, type) {
+      return {
+        id: Date.now().toString() + Math.random().toString(16).slice(2),
+        amount: Number(amount),
+        label: label.trim() || '(uten tekst)',
+        type, // 'income' | 'expense'
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    function addMoneyEntry(type) {
+      const amount = Number(moneyAmountEl.value);
+      const label = moneyLabelEl.value;
+      if (!amount || isNaN(amount)) {
+        setMoneyStatus('Skriv inn et gyldig beløp.', true);
+        return;
+      }
+      const entry = createMoneyEntry(amount, label, type);
+      moneyEntries.unshift(entry);
+      moneyAmountEl.value = '';
+      moneyLabelEl.value = '';
+      saveMoney();
+      renderMoney();
+      setMoneyStatus(type === 'income' ? 'Inntekt lagt til.' : 'Utgift lagt til.', false);
+    }
+
+    function setMoneyStatus(message, isError) {
+      moneyStatusEl.textContent = message;
+      moneyStatusEl.style.color = isError ? 'crimson' : 'inherit';
+    }
+
+    function deleteMoneyEntry(id) {
+      moneyEntries = moneyEntries.filter(e => e.id !== id);
+      saveMoney();
+      renderMoney();
+      setMoneyStatus('Post slettet.', false);
+    }
+
+    function calcBalance() {
+      let income = 0;
+      let expense = 0;
+      moneyEntries.forEach(e => {
+        if (e.type === 'income') income += e.amount;
+        else expense += e.amount;
+      });
+      return { income, expense, balance: income - expense };
+    }
+
+    function renderMoney() {
+      moneyHistoryEl.innerHTML = '';
+      moneyEntries.forEach(entry => {
+        const row = document.createElement('div');
+        row.className = 'money-item';
+
+        const left = document.createElement('div');
+        left.textContent = `${entry.label} (${new Date(entry.createdAt).toLocaleDateString()})`;
+
+        const right = document.createElement('div');
+        right.className = entry.type === 'income' ? 'money-positive' : 'money-negative';
+        right.textContent = (entry.type === 'income' ? '+' : '-') + entry.amount + ' kr';
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'X';
+        delBtn.className = 'secondary';
+        delBtn.style.marginLeft = '6px';
+        delBtn.style.padding = '2px 6px';
+        delBtn.addEventListener('click', () => deleteMoneyEntry(entry.id));
+
+        const rightWrapper = document.createElement('div');
+        rightWrapper.style.display = 'flex';
+        rightWrapper.style.alignItems = 'center';
+        rightWrapper.appendChild(right);
+        rightWrapper.appendChild(delBtn);
+
+        row.appendChild(left);
+        row.appendChild(rightWrapper);
+        moneyHistoryEl.appendChild(row);
+      });
+
+      const { income, expense, balance } = calcBalance();
+      moneyBalanceBadge.textContent = `Saldo: ${balance} kr`;
+      moneySummaryEl.innerHTML = `
+        Inntekter: <span class="money-positive">${income} kr</span> ·
+        Utgifter: <span class="money-negative">${expense} kr</span> ·
+        Netto: <strong>${balance} kr</strong>
+      `;
+    }
+
+    function saveMoney() {
+      try {
+        localStorage.setItem('multiapp2_money', JSON.stringify(moneyEntries));
+      } catch (e) {
+        console.warn('Kunne ikke lagre økonomi:', e);
+      }
+    }
+
+    function loadMoney() {
+      try {
+        const stored = localStorage.getItem('multiapp2_money');
+        if (stored) {
+          moneyEntries = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.warn('Kunne ikke lese økonomi:', e);
+      }
+      renderMoney();
+    }
+
+    moneyAddIncomeBtn.addEventListener('click', () => addMoneyEntry('income'));
+    moneyAddExpenseBtn.addEventListener('click', () => addMoneyEntry('expense'));
+
+    loadMoney();
+
+    // =========================
+    // QUOTES
+    // =========================
+
+    const quoteTextEl = document.getElementById('quoteText');
+    const quoteAuthorEl = document.getElementById('quoteAuthor');
+    const quoteNewBtn = document.getElementById('quoteNewBtn');
+    const quoteCopyBtn = document.getElementById('quoteCopyBtn');
+    const quoteStatusEl = document.getElementById('quoteStatus');
+
+    const quotes = [
+      { text: 'Det perfekte øyeblikket finnes ikke, du lager det.', author: 'Ukjent' },
+      { text: 'Små steg hver dag slår store planer som aldri skjer.', author: 'Ukjent' },
+      { text: 'Du trenger ikke motivasjon for å starte, du får motivasjon av å starte.', author: 'Ukjent' },
+      { text: 'Disiplin er å gjøre det du bør, også når du ikke har lyst.', author: 'Ukjent' },
+      { text: 'Fremgang > perfeksjon.', author: 'Ukjent' },
+      { text: 'Hvis det er viktig, finner du en måte. Hvis ikke, finner du en unnskyldning.', author: 'Ukjent' },
+      { text: 'Du er én god vane unna en helt annen hverdag.', author: 'Ukjent' }
+    ];
+
+    function randomQuote() {
+      const idx = Math.floor(Math.random() * quotes.length);
+      return quotes[idx];
+    }
+
+    function showRandomQuote() {
+      const q = randomQuote();
+      quoteTextEl.textContent = '“' + q.text + '”';
+      quoteAuthorEl.textContent = '– ' + q.author;
+      quoteStatusEl.textContent = '';
+    }
+
+    function copyQuoteToClipboard() {
+      const text = quoteTextEl.textContent + ' ' + quoteAuthorEl.textContent;
+      if (!text.trim()) {
+        quoteStatusEl.textContent = 'Ingen quote å kopiere.';
+        return;
+      }
+      navigator.clipboard.writeText(text).then(() => {
+        quoteStatusEl.textContent = 'Quote kopiert til utklippstavle.';
+      }).catch(() => {
+        quoteStatusEl.textContent = 'Kunne ikke kopiere.';
+      });
+    }
+
+    quoteNewBtn.addEventListener('click', showRandomQuote);
+    quoteCopyBtn.addEventListener('click', copyQuoteToClipboard);
+
+    // =========================
+    // FARGEGREIER
+    // =========================
+
+    const colorPreviewEl = document.getElementById('colorPreview');
+    const colorCodeEl = document.getElementById('colorCode');
+    const colorCopyBtn = document.getElementById('colorCopyBtn');
+    const colorRandomBtn = document.getElementById('colorRandomBtn');
+    const colorStatusEl = document.getElementById('colorStatus');
+
+    function randomHexColor() {
+      const n = Math.floor(Math.random() * 0xffffff);
+      return '#' + n.toString(16).padStart(6, '0');
+    }
+
+    function setColor(color) {
+      colorPreviewEl.style.background = color;
+      colorCodeEl.textContent = color.toUpperCase();
+      try {
+        localStorage.setItem('multiapp2_color', color);
+      } catch (e) {
+        console.warn('Kunne ikke lagre farge:', e);
+      }
+    }
+
+    function loadColor() {
+      try {
+        const stored = localStorage.getItem('multiapp2_color');
+        if (stored) {
+          setColor(stored);
+          return;
+        }
+      } catch (e) {
+        console.warn('Kunne ikke lese farge:', e);
+      }
+      setColor('#ff6b6b');
+    }
+
+    function newRandomColor() {
+      const c = randomHexColor();
+      setColor(c);
+      colorStatusEl.textContent = 'Ny farge generert.';
+    }
+
+    function copyColor() {
+      const text = colorCodeEl.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        colorStatusEl.textContent = 'Farge kopiert.';
+      }).catch(() => {
+        colorStatusEl.textContent = 'Kunne ikke kopiere.';
+      });
+    }
+
+    colorRandomBtn.addEventListener('click', newRandomColor);
+    colorCopyBtn.addEventListener('click', copyColor);
+
+    loadColor();
+
+    // =========================
+    // SNAKE
+    // =========================
+
+    const snakeCanvas = document.getElementById('snakeCanvas');
+    const snakeCtx = snakeCanvas.getContext('2d');
+    const snakeScoreBadge = document.getElementById('snakeScoreBadge');
+    const snakeScoreText = document.getElementById('snakeScoreText');
+    const snakeStatusEl = document.getElementById('snakeStatus');
+
+    const gridSize = 13; // 13x13 ruter (260/20)
+    const cellSize = 20;
+
+    let snake = [];
+    let snakeDir = { x: 1, y: 0 };
+    let snakeFood = null;
+    let snakeScore = 0;
+    let snakeIntervalId = null;
+    let snakeRunning = false;
+    let snakePendingDir = null;
+
+    function initSnake() {
+      snake = [
+        { x: 5, y: 6 },
+        { x: 4, y: 6 },
+        { x: 3, y: 6 }
+      ];
+      snakeDir = { x: 1, y: 0 };
+      snakePendingDir = null;
+      snakeScore = 0;
+      placeFood();
+      updateSnakeScore();
+      drawSnake();
+      snakeStatusEl.textContent = 'Klar til å spille. Trykk mellomrom.';
+    }
+
+    function placeFood() {
+      while (true) {
+        const x = Math.floor(Math.random() * gridSize);
+        const y = Math.floor(Math.random() * gridSize);
+        if (!snake.some(seg => seg.x === x && seg.y === y)) {
+          snakeFood = { x, y };
+          break;
+        }
+      }
+    }
+
+    function updateSnakeScore() {
+      snakeScoreBadge.textContent = `Score: ${snakeScore}`;
+      snakeScoreText.textContent = `Score: ${snakeScore}`;
+    }
+
+    function drawSnake() {
+      snakeCtx.fillStyle = '#000';
+      snakeCtx.fillRect(0, 0, snakeCanvas.width, snakeCanvas.height);
+
+      // Food
+      if (snakeFood) {
+        snakeCtx.fillStyle = '#ff6b6b';
+        snakeCtx.fillRect(
+          snakeFood.x * cellSize,
+          snakeFood.y * cellSize,
+          cellSize,
+          cellSize
+        );
+      }
+
+      // Snake
+      snake.forEach((seg, index) => {
+        snakeCtx.fillStyle = index === 0 ? '#4dabf7' : '#f1f3f5';
+        snakeCtx.fillRect(
+          seg.x * cellSize,
+          seg.y * cellSize,
+          cellSize - 1,
+          cellSize - 1
+        );
+      });
+    }
+
+    function stepSnake() {
+      if (snakePendingDir) {
+        snakeDir = snakePendingDir;
+        snakePendingDir = null;
+      }
+
+      const head = snake[0];
+      const newHead = { x: head.x + snakeDir.x, y: head.y + snakeDir.y };
+
+      // Vegg-kollisjon
+      if (
+        newHead.x < 0 ||
+        newHead.y < 0 ||
+        newHead.x >= gridSize ||
+        newHead.y >= gridSize
+      ) {
+        gameOverSnake('Du traff veggen.');
+        return;
+      }
+
+      // Egen kropp
+      if (snake.some(seg => seg.x === newHead.x && seg.y === newHead.y)) {
+        gameOverSnake('Du spiste deg selv.');
+        return;
+      }
+
+      snake.unshift(newHead);
+
+      // Mat
+      if (snakeFood && newHead.x === snakeFood.x && newHead.y === snakeFood.y) {
+        snakeScore += 1;
+        updateSnakeScore();
+        placeFood();
+      } else {
+        snake.pop();
+      }
+
+      drawSnake();
+    }
+
+    function gameOverSnake(reason) {
+      stopSnake();
+      snakeStatusEl.textContent = `Game over: ${reason} Score: ${snakeScore}. Trykk mellomrom for å starte på nytt.`;
+    }
+
+    function startSnake() {
+      if (snakeRunning) return;
+      snakeRunning = true;
+      snakeStatusEl.textContent = 'Spiller...';
+      snakeIntervalId = setInterval(stepSnake, 130);
+    }
+
+    function stopSnake() {
+      snakeRunning = false;
+      if (snakeIntervalId !== null) {
+        clearInterval(snakeIntervalId);
+        snakeIntervalId = null;
+      }
+    }
+
+    function toggleSnake() {
+      if (!snakeRunning && snakeScore === 0 && snake.length === 0) {
+        initSnake();
+        startSnake();
+        return;
+      }
+      if (snakeRunning) {
+        stopSnake();
+        snakeStatusEl.textContent = 'Pauset. Trykk mellomrom for å fortsette.';
+      } else {
+        startSnake();
+      }
+    }
+
+    function handleSnakeKey(e) {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (snake.length === 0) {
+          initSnake();
+        }
+        toggleSnake();
+        return;
+      }
+      if (!snakeRunning) return;
+
+      const key = e.key;
+      let newDir = null;
+      if (key === 'ArrowUp') newDir = { x: 0, y: -1 };
+      if (key === 'ArrowDown') newDir = { x: 0, y: 1 };
+      if (key === 'ArrowLeft') newDir = { x: -1, y: 0 };
+      if (key === 'ArrowRight') newDir = { x: 1, y: 0 };
+
+      if (!newDir) return;
+
+      // Hindre 180-graders snu
+      if (newDir.x === -snakeDir.x && newDir.y === -snakeDir.y) {
+        return;
+      }
+
+      snakePendingDir = newDir;
+    }
+
+    window.addEventListener('keydown', handleSnakeKey);
+    initSnake();
+
+    // =========================
+    // Små hjelpefunksjoner (du kan bygge videre)
+    // =========================
+
+    function logEvent(source, message) {
+      console.log(`[${new Date().toISOString()}] [${source}] ${message}`);
+    }
+
+    function debounce(fn, delay) {
+      let timeoutId;
+      return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn.apply(this, args), delay);
+      };
+    }
+
+    const logResize = debounce(() => {
+      logEvent('window', `Størrelse: ${window.innerWidth}x${window.innerHeight}`);
+    }, 500);
+
+    window.addEventListener('resize', logResize);
+  </script>
+</body>
+</html>
